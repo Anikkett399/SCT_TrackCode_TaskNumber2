@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ChronoDeck - Stopwatch, Timer, Alarm</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0d1b2a 60%, #ff4d6d 100%);
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.08);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      padding: 32px 24px;
+      backdrop-filter: blur(12px);
+    }
+    nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+    nav button {
+      background: #fff2;
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 10px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    nav button.active, nav button:hover {
+      background: #ff4d6d;
+      color: #fff;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .section {
+      display: none;
+      animation: fadeIn 0.7s;
+    }
+    .section.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .digits {
+      font-size: 2.5rem;
+      font-family: 'Poppins', monospace;
+      text-align: center;
+      margin-bottom: 18px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .btns button {
+      background: #fff2;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btns button:hover {
+      background: #ff4d6d;
+      color: #fff;
+    }
+    .laps, .splits, .alarms {
+      background: #fff1;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 1rem;
+    }
+    .input-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .input-row input {
+      width: 60px;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      text-align: center;
+      background: #fff2;
+      color: #fff;
+    }
+    .input-row label {
+      font-size: 1rem;
+      margin-right: 6px;
+    }
+    .alarms-list {
+      margin-top: 12px;
+    }
+    .alarms-list div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff2;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+    }
+    .alarms-list button {
+      background: #ff4d6d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .footer {
+      text-align: center;
+      color: #fff8;
+      margin-top: 32px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <button id="tab-stopwatch" class="active">Stopwatch</button>
+      <button id="tab-timer">Timer</button>
+      <button id="tab-alarm">Alarm</button>
+    </nav>
+
+    <!-- Stopwatch Section -->
+    <section id="section-stopwatch" class="section active">
+      <h2>Stopwatch</h2>
+      <div class="digits" id="sw-digits">00:00.00</div>
+      <div class="btns">
+        <button id="sw-start">Start</button>
+        <button id="sw-pause">Pause</button>
+        <button id="sw-lap">Lap</button>
+        <button id="sw-reset">Reset</button>
+        <button id="sw-export">Export Laps</button>
+      </div>
+      <div class="laps" id="sw-laps"></div>
+      <div class="splits" id="sw-splits"></div>
+    </section>
+
+    <!-- Timer Section -->
+    <section id="section-timer" class="section">
+      <h2>Timer</h2>
+      <div class="digits" id="tm-digits">00:30.00</div>
+      <div class="input-row">
+        <label>Min</label><input type="number" id="tm-min" min="0" value="0">
+        <label>Sec</label><input type="number" id="tm-sec" min="0" value="30">
+        <button id="tm-apply">Apply</button>
+      </div>
+      <div class="btns">
+        <button id="tm-start">Start</button>
+        <button id="tm-pause">Pause</button>
+        <button id="tm-reset">Reset</button>
+      </div>
+    </section>
+
+    <!-- Alarm Section -->
+    <section id="section-alarm" class="section">
+      <h2>Alarm</h2>
+      <div class="input-row">
+        <input type="time" id="al-time">
+        <button id="al-add">Add Alarm</button>
+      </div>
+      <div class="alarms-list" id="al-list"></div>
+    </section>
+
+    <div class="footer">
+      Pro tip: Space = Start/Pause · L = Lap · R = Reset (Stopwatch)
+    </div>
+  </div>
+  <script>
+    // Utility: format milliseconds to H:MM:SS.ms
+    function formatTime(ms) {
+      const totalMs = Math.max(0, Math.floor(ms));
+      const milliseconds = Math.floor((totalMs % 1000) / 10); // 2 digits
+      const totalSeconds = Math.floor(totalMs / 1000);
+      const seconds = totalSeconds % 60;
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      const minutes = totalMinutes % 60;
+      const hours = Math.floor(totalMinutes / 60);
+      const HH = hours > 0 ? `${hours}:` : "";
+      const MM = hours > 0 ? String(minutes).padStart(2, "0") : String(minutes);
+      const SS = String(seconds).padStart(2, "0");
+      const MS = String(milliseconds).padStart(2, "0");
+      return `${HH}${MM}:${SS}.${MS}`;
+    }
+
+    // Simple beep using Web Audio API
+    function playBeep(duration = 1.2) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        g.gain.setValueAtTime(0.2, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        o.stop(ctx.currentTime + duration);
+      } catch {}
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+
+    // Tab switching
+    function showTab(tab) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + tab).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.title = "⏱️ " + tab.charAt(0).toUpperCase() + tab.slice(1);
+    }
+    document.getElementById('tab-stopwatch').onclick = () => showTab('stopwatch');
+    document.getElementById('tab-timer').onclick = () => showTab('timer');
+    document.getElementById('tab-alarm').onclick = () => showTab('alarm');
+
+    // ================= STOPWATCH =================
+    let swRunning = false, swElapsed = 0, swStartTs = null, swBase = 0, swRAF = null, swLaps = [];
+    const swDigits = document.getElementById('sw-digits');
+    const swStartBtn = document.getElementById('sw-start');
+    const swPauseBtn = document.getElementById('sw-pause');
+    const swLapBtn = document.getElementById('sw-lap');
+    const swResetBtn = document.getElementById('sw-reset');
+    const swExportBtn = document.getElementById('sw-export');
+    const swLapsDiv = document.getElementById('sw-laps');
+    const swSplitsDiv = document.getElementById('sw-splits');
+
+    function swTick(now) {
+      if (swStartTs != null) {
+        swElapsed = swBase + (now - swStartTs);
+        swDigits.textContent = formatTime(swElapsed);
+        swRAF = requestAnimationFrame(swTick);
+      }
+    }
+    swStartBtn.onclick = () => {
+      if (!swRunning) {
+        swRunning = true;
+        swStartTs = performance.now();
+        swRAF = requestAnimationFrame(swTick);
+      }
+    };
+    swPauseBtn.onclick = () => {
+      if (swRunning && swStartTs != null) {
+        swBase = swBase + (performance.now() - swStartTs);
+        swStartTs = null;
+        swRunning = false;
+        if (swRAF) cancelAnimationFrame(swRAF);
+      }
+    };
+    swResetBtn.onclick = () => {
+      swRunning = false;
+      swStartTs = null;
+      swBase = 0;
+      swElapsed = 0;
+      swLaps = [];
+      swDigits.textContent = formatTime(0);
+      swLapsDiv.innerHTML = "";
+      swSplitsDiv.innerHTML = "";
+      if (swRAF) cancelAnimationFrame(swRAF);
+    };
+    swLapBtn.onclick = () => {
+      if (!swRunning && swElapsed === 0) return;
+      swLaps.unshift(swElapsed);
+      renderLaps();
+    };
+    function renderLaps() {
+      swLapsDiv.innerHTML = "<b>Lap Times</b><br>" + (swLaps.length === 0 ? "No laps yet." : swLaps.map((t,i) => `Lap ${swLaps.length-i}: ${formatTime(t)}`).join("<br>"));
+      let splits = [];
+      let prev = 0;
+      [...swLaps].reverse().forEach((t,i) => {
+        splits.push({idx: i+1, lap: t, split: t-prev});
+        prev = t;
+      });
+      splits = splits.reverse();
+      swSplitsDiv.innerHTML = "<b>Lap Splits</b><br>" + (splits.length === 0 ? "Splits will show here." : splits.map((s,i) => `Lap ${splits.length-i}: ${formatTime(s.split)}`).join("<br>"));
+    }
+    swExportBtn.onclick = () => {
+      if (swLaps.length === 0) return;
+      let splits = [];
+      let prev = 0;
+      [...swLaps].reverse().forEach((t,i) => {
+        splits.push({idx: i+1, lap: t, split: t-prev});
+        prev = t;
+      });
+      splits = splits.reverse();
+      const header = "Lap,Total Time (ms),Split (ms)\n";
+      const body = splits.map((s,i) => `${splits.length-i},${s.lap},${s.split}`).join("\n");
+      const blob = new Blob([header+body], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `laps_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    // Keyboard shortcuts
+    window.addEventListener("keydown", function(e){
+      if(document.getElementById('section-stopwatch').classList.contains('active')){
+        if(e.code === "Space"){ e.preventDefault(); swRunning ? swPauseBtn.onclick() : swStartBtn.onclick(); }
+        else if(e.key.toLowerCase() === "l"){ swLapBtn.onclick(); }
+        else if(e.key.toLowerCase() === "r"){ swResetBtn.onclick(); }
+      }
+    });
+
+    // ================= TIMER =================
+    let tmRunning = false, tmRemaining = 30000, tmStartTs = null, tmBase = 30000, tmRAF = null;
+    const tmDigits = document.getElementById('tm-digits');
+    const tmStartBtn = document.getElementById('tm-start');
+    const tmPauseBtn = document.getElementById('tm-pause');
+    const tmResetBtn = document.getElementById('tm-reset');
+    const tmMinInput = document.getElementById('tm-min');
+    const tmSecInput = document.getElementById('tm-sec');
+    const tmApplyBtn = document.getElementById('tm-apply');
+
+    function tmTick(now) {
+      const elapsed = tmStartTs ? now - tmStartTs : 0;
+      const left = Math.max(0, tmBase - elapsed);
+      tmRemaining = left;
+      tmDigits.textContent = formatTime(left);
+      if (left <= 0) {
+        tmRunning = false;
+        tmStartTs = null;
+        tmBase = 0;
+        playBeep();
+        return;
+      }
+      tmRAF = requestAnimationFrame(tmTick);
+    }
+    tmApplyBtn.onclick = () => {
+      const ms = parseInt(tmMinInput.value)*60000 + parseInt(tmSecInput.value)*1000;
+      tmRemaining = ms;
+      tmBase = ms;
+      tmDigits.textContent = formatTime(ms);
+    };
+    tmStartBtn.onclick = () => {
+      if (tmRemaining <= 0) return;
+      tmRunning = true;
+      tmStartTs = performance.now();
+      tmRAF = requestAnimationFrame(tmTick);
+    };
+    tmPauseBtn.onclick = () => {
+      if (!tmRunning) return;
+      const elapsed = tmStartTs ? performance.now() - tmStartTs : 0;
+      tmBase = Math.max(0, tmBase - elapsed);
+      tmRunning = false;
+      if (tmRAF) cancelAnimationFrame(tmRAF);
+    };
+    tmResetBtn.onclick = () => {
+      tmRunning = false;
+      tmStartTs = null;
+      tmBase = tmRemaining;
+      tmApplyBtn.onclick();
+      if (tmRAF) cancelAnimationFrame(tmRAF);
+    };
+
+    // ================= ALARM =================
+    let alarms = [];
+    const alTimeInput = document.getElementById('al-time');
+    const alAddBtn = document.getElementById('al-add');
+    const alListDiv = document.getElementById('al-list');
+    function renderAlarms() {
+      alListDiv.innerHTML = "";
+      alarms.forEach((a,i) => {
+        const div = document.createElement('div');
+        div.innerHTML = `<span>${a.time} <span style="font-size:0.9em; color:${a.enabled?"#0f0":"#fff8"}">${a.enabled?"Enabled":"Disabled"}</span></span>`;
+        const btnEnable = document.createElement('button');
+        btnEnable.textContent = a.enabled ? "Disable" : "Enable";
+        btnEnable.onclick = () => { a.enabled = !a.enabled; renderAlarms(); };
+        const btnRemove = document.createElement('button');
+        btnRemove.textContent = "Remove";
+        btnRemove.onclick = () => { alarms.splice(i,1); renderAlarms(); };
+        div.appendChild(btnEnable);
+        div.appendChild(btnRemove);
+        alListDiv.appendChild(div);
+      });
+    }
+    alAddBtn.onclick = () => {
+      if (!alTimeInput.value) return;
+      alarms.unshift({time: alTimeInput.value, enabled: true});
+      renderAlarms();
+    };
+    setInterval(() => {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,"0");
+      const mm = String(now.getMinutes()).padStart(2,"0");
+      const current = `${hh}:${mm}`;
+      alarms.forEach(a => {
+        if (a.enabled && a.time === current) {
+          playBeep();
+          a.enabled = false;
+          renderAlarms();
+        }
+      });
+    }, 1000);
+    // Set default alarm time
+    const d = new Date();
+    alTimeInput.value = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  </script>
+</body>
+</html>
